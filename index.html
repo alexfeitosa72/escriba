@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Escriba. Digitação controlada</title>
+  <meta name="description" content="Preparação e digitação controlada de códigos em ambiente remoto autorizado.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">ENTRADA CONTROLADA DE CÓDIGO</p>
+      <h1>Escriba</h1>
+    </div>
+    <div id="agentBadge" class="prototype-badge" aria-label="Estado do agente local">
+      <span class="status-dot" aria-hidden="true"></span>
+      Agente não detectado
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="notice" aria-labelledby="noticeTitle">
+      <div class="notice-icon" aria-hidden="true">i</div>
+      <div>
+        <h2 id="noticeTitle">Homologação controlada</h2>
+        <p id="noticeText">Abra o Escriba pelo inicializador remoto para habilitar o agente. O modo local permanece disponível para testes seguros.</p>
+      </div>
+    </section>
+
+    <section class="workspace" aria-label="Área principal do Escriba">
+      <div class="editor-panel panel">
+        <div class="panel-heading">
+          <div>
+            <span class="step-number">01</span>
+            <h2>Conteúdo de entrada</h2>
+          </div>
+          <button id="sampleButton" class="button button-ghost" type="button">Carregar exemplo</button>
+        </div>
+
+        <label class="field-label" for="sourceText">Cole explicitamente o código ou texto</label>
+        <textarea id="sourceText" class="code-editor" spellcheck="false" autocomplete="off" placeholder="Cole aqui o conteúdo produzido e testado externamente..."></textarea>
+
+        <div class="metrics" aria-label="Resumo do conteúdo">
+          <div class="metric"><span id="lineCount">0</span><small>linhas</small></div>
+          <div class="metric"><span id="charCount">0</span><small>caracteres</small></div>
+          <div class="metric"><span id="alertCount">0</span><small>alertas</small></div>
+          <div class="metric"><span id="blockCount">0</span><small>blocos</small></div>
+        </div>
+
+        <div id="alerts" class="alerts" aria-live="polite"></div>
+      </div>
+
+      <aside class="settings-panel panel" aria-labelledby="settings-title">
+        <div class="panel-heading compact">
+          <div>
+            <span class="step-number">02</span>
+            <h2 id="settings-title">Configuração</h2>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label class="field-group">
+            <span>Modo de execução</span>
+            <select id="executionMode">
+              <option value="local">Teste no campo interno</option>
+              <option id="remoteModeOption" value="remote" disabled>Janela remota autorizada</option>
+            </select>
+          </label>
+
+          <label class="field-group">
+            <span>Perfil de destino</span>
+            <select id="profile">
+              <option value="zeppelin">Zeppelin</option>
+              <option value="qlik">Qlik Sense</option>
+              <option value="sas">SAS</option>
+              <option value="generic">Genérico</option>
+            </select>
+          </label>
+
+          <label class="field-group">
+            <span>Máximo de linhas por bloco</span>
+            <input id="maxLines" type="number" min="2" max="200" value="12">
+          </label>
+
+          <label class="field-group">
+            <span>Intervalo entre teclas</span>
+            <div class="range-row">
+              <input id="keyDelay" type="range" min="5" max="250" step="5" value="35">
+              <output id="keyDelayOutput" for="keyDelay">35 ms</output>
+            </div>
+          </label>
+
+          <label class="field-group">
+            <span>Pausa após cada linha</span>
+            <div class="range-row">
+              <input id="lineDelay" type="range" min="0" max="1000" step="50" value="150">
+              <output id="lineDelayOutput" for="lineDelay">150 ms</output>
+            </div>
+          </label>
+
+          <label class="field-group">
+            <span>Contagem regressiva</span>
+            <select id="countdown">
+              <option value="0">Sem espera, apenas teste local</option>
+              <option value="3" selected>3 segundos</option>
+              <option value="5">5 segundos</option>
+              <option value="10">10 segundos</option>
+            </select>
+          </label>
+
+          <label class="field-group">
+            <span>Tratamento de tabulações</span>
+            <select id="tabMode">
+              <option value="keep">Preservar tabulação</option>
+              <option value="2">Converter para 2 espaços</option>
+              <option value="4" selected>Converter para 4 espaços</option>
+              <option value="8">Converter para 8 espaços</option>
+            </select>
+          </label>
+
+          <label class="field-group">
+            <span>Recuo automático do editor remoto</span>
+            <select id="autoIndent">
+              <option value="clear" selected>Limpar após cada linha (editores com auto-indentação)</option>
+              <option value="off">Não interferir</option>
+            </select>
+          </label>
+        </div>
+
+        <button id="prepareButton" class="button button-primary button-wide" type="button">Preparar sessão</button>
+        <p class="privacy-note">O conteúdo permanece na estação local e não é salvo ou sincronizado. Apenas as configurações acima são lembradas neste navegador.</p>
+      </aside>
+    </section>
+
+    <section class="session-panel panel" aria-labelledby="session-title">
+      <div class="panel-heading session-heading">
+        <div>
+          <span class="step-number">03</span>
+          <h2 id="session-title">Sessão de teste</h2>
+        </div>
+        <div id="sessionStatus" class="session-status idle" role="status" aria-live="assertive">Inativo</div>
+      </div>
+
+      <div class="session-grid">
+        <nav class="block-nav" aria-label="Blocos preparados">
+          <div class="block-nav-title">
+            <span>Blocos</span>
+            <span id="blockPosition">0 / 0</span>
+          </div>
+          <div id="blockList" class="block-list">
+            <p class="empty-state">Prepare uma sessão para visualizar os blocos.</p>
+          </div>
+        </nav>
+
+        <div class="preview-column">
+          <div class="surface-heading">
+            <div>
+              <span class="surface-label">PRÉVIA</span>
+              <strong id="previewTitle">Nenhum bloco selecionado</strong>
+            </div>
+            <label class="switch-label">
+              <input id="showWhitespace" type="checkbox">
+              <span>Exibir espaços</span>
+            </label>
+          </div>
+          <div id="codePreview" class="code-preview" aria-label="Prévia do bloco">
+            <p class="empty-state">O conteúdo preparado aparecerá aqui.</p>
+          </div>
+        </div>
+
+        <div class="test-column">
+          <div class="surface-heading">
+            <div>
+              <span class="surface-label">DESTINO AUTORIZADO</span>
+              <strong id="destinationTitle">Campo de teste interno</strong>
+            </div>
+            <button id="clearTargetButton" class="text-button" type="button">Limpar campo</button>
+          </div>
+          <textarea id="testTarget" class="test-target" spellcheck="false" aria-label="Campo de teste interno" placeholder="A digitação controlada aparecerá aqui..."></textarea>
+          <div id="remoteInstructions" class="remote-instructions" hidden>
+            <strong>Antes de iniciar</strong>
+            <ol>
+              <li>Mantenha a sessão remota aberta no navegador.</li>
+              <li>Inicie a contagem e selecione o editor dentro da máquina virtual.</li>
+              <li>Não troque de janela ou aba durante a digitação.</li>
+              <li>Pressione <kbd>Esc</kbd> para cancelar imediatamente.</li>
+            </ol>
+            <p id="targetMetadata">O destino será identificado ao final da contagem regressiva.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-track" aria-hidden="true"><div id="progressBar" class="progress-bar"></div></div>
+        <span id="progressText">0%</span>
+      </div>
+
+      <div class="actions">
+        <div class="actions-left">
+          <button id="previousButton" class="button button-secondary" type="button" disabled>Bloco anterior</button>
+          <button id="nextButton" class="button button-secondary" type="button" disabled>Próximo bloco</button>
+        </div>
+        <div class="actions-right">
+          <button id="clearSessionButton" class="button button-danger-ghost" type="button">Limpar sessão</button>
+          <button id="pauseButton" class="button button-secondary" type="button" disabled>Pausar</button>
+          <button id="cancelButton" class="button button-danger" type="button" disabled>Cancelar</button>
+          <button id="startButton" class="button button-primary" type="button" disabled>Iniciar teste local</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Escriba 0.3.0</span>
+    <span>Processamento exclusivamente local</span>
+  </footer>
+
+  <script src="agent-config.js"></script>
+  <script src="escriba-core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

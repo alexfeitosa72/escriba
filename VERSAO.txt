@@ -1,0 +1,4 @@
+Escriba 0.3.0
+Fase: protótipo de homologação controlada
+Destino local: campo de teste interno
+Destino remoto: navegador autorizado por agente Windows local
